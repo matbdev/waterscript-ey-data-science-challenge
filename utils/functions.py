@@ -6,15 +6,8 @@ from snowflake.snowpark.context import get_active_session
 import pystac_client
 import planetary_computer as pc
 
-# Bands of interest on landsat data-engineering notebook
-landsat_bands_of_interest = [
-    'green',
-    'blue',
-    'red',
-    'nir08',
-    'swir16',
-    'swir22'
-]
+# Data processing
+import pandas as pd
 
 def save_df(df, table_name, save_path):
     '''
@@ -44,3 +37,47 @@ def get_catalog(collection):
     )
 
     return catalog
+
+def combine_datasets(main_df, feature_dfs_list):
+    '''
+    Returns a  vertically concatenated dataset.
+    You can pass as many datasets you want, inside a list.
+    Verifys lenght to avoid errors.
+    '''
+    join_cols = ['Latitude', 'Longitude', 'Sample Date']
+    merged_df = main_df.copy()
+
+    # Padronize the keys
+    merged_df_padronized = padronize_keys(merged_df)
+    
+    for i, df_feat in enumerate(feature_dfs_list):
+        df_feat_copy = df_feat.copy()
+
+        # Padronize the keys
+        df_feat_copy_padronized = padronize_keys(df_feat_copy)
+        
+        # Only unique cols
+        cols_to_use = list(
+            feat_clean.columns.difference(merged_df.columns)
+        ) + join_cols
+
+        # Merge left on base df
+        merged_df = pd.merge(
+            merged_df,
+            feat_clean[cols_to_use],
+            on=join_cols,
+            how='left'
+        )
+        
+    return combined
+
+def padronize_keys(df):
+    df_copy = df.copy()
+
+    if 'Sample Date' in df.columns:
+        df_copy['Sample Date'] = pd.to_datetime(df_copy['Sample Date'], dayfirst=True, errors='coerce')
+        
+    df_copy['Latitude'] = df_copy['Latitude'].round(6)
+    df_copy['Longitude'] = df_copy['Longitude'].round(6)
+
+    return df_copy
