@@ -58,13 +58,13 @@ def combine_datasets(main_df, feature_dfs_list):
         
         # Only unique cols
         cols_to_use = list(
-            feat_clean.columns.difference(merged_df.columns)
+            df_feat_copy_padronized.columns.difference(merged_df.columns)
         ) + join_cols
 
         # Merge left on base df
         merged_df = pd.merge(
             merged_df,
-            feat_clean[cols_to_use],
+            df_feat_copy_padronized[cols_to_use],
             on=join_cols,
             how='left'
         )
