@@ -44,32 +44,32 @@ def combine_datasets(main_df, feature_dfs_list):
     You can pass as many datasets you want, inside a list.
     Verifys lenght to avoid errors.
     '''
-    join_cols = ['Latitude', 'Longitude', 'Sample Date']
-    merged_df = main_df.copy()
-
-    # Padronize the keys
-    merged_df_padronized = padronize_keys(merged_df)
+    # Padronize keys
+    merged_df = padronize_keys(main_df)
     
     for i, df_feat in enumerate(feature_dfs_list):
-        df_feat_copy = df_feat.copy()
+        join_cols = ['Latitude', 'Longitude']
+    
+        df_feat_padronized = padronize_keys(df_feat)
 
-        # Padronize the keys
-        df_feat_copy_padronized = padronize_keys(df_feat_copy)
+        # Uses 'Sample Date' if it exists on both dfs
+        if 'Sample Date' in merged_df.columns and 'Sample Date' in df_feat_padronized.columns:
+            join_cols.append('Sample Date')
         
         # Only unique cols
         cols_to_use = list(
-            df_feat_copy_padronized.columns.difference(merged_df.columns)
+            df_feat_padronized.columns.difference(merged_df.columns)
         ) + join_cols
 
         # Merge left on base df
         merged_df = pd.merge(
             merged_df,
-            df_feat_copy_padronized[cols_to_use],
+            df_feat_padronized[cols_to_use],
             on=join_cols,
             how='left'
         )
         
-    return combined
+    return merged_df
 
 def padronize_keys(df):
     df_copy = df.copy()
